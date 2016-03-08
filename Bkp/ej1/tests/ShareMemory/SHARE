@@ -1,0 +1,111 @@
+SHMGET(2)                                                                                                 Linux Programmer's Manual                                                                                                 SHMGET(2)
+
+
+
+NNAAMMEE
+       shmget - allocates a System V shared memory segment
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<ssyyss//iippcc..hh>>
+       ##iinncclluuddee <<ssyyss//sshhmm..hh>>
+
+       iinntt sshhmmggeett((kkeeyy__tt _k_e_y,, ssiizzee__tt _s_i_z_e,, iinntt _s_h_m_f_l_g));;
+
+DDEESSCCRRIIPPTTIIOONN
+       sshhmmggeett() returns the identifier of the System V shared memory segment associated with the value of the argument _k_e_y.  A new shared memory segment, with size equal to the value of _s_i_z_e rounded up to a multiple of PPAAGGEE__SSIIZZEE, is cre‐
+       ated if _k_e_y has the value IIPPCC__PPRRIIVVAATTEE or _k_e_y isn't IIPPCC__PPRRIIVVAATTEE, no shared memory segment corresponding to _k_e_y exists, and IIPPCC__CCRREEAATT is specified in _s_h_m_f_l_g.
+
+       If _s_h_m_f_l_g specifies both IIPPCC__CCRREEAATT and IIPPCC__EEXXCCLL and a shared memory segment already exists for _k_e_y, then sshhmmggeett() fails with _e_r_r_n_o set to EEEEXXIISSTT.  (This is analogous to the effect of the combination OO__CCRREEAATT || OO__EEXXCCLL for ooppeenn(2).)
+
+       The value _s_h_m_f_l_g is composed of:
+
+       IIPPCC__CCRREEAATT   to create a new segment.  If this flag is not used, then sshhmmggeett() will find the segment associated with _k_e_y and check to see if the user has permission to access the segment.
+
+       IIPPCC__EEXXCCLL    used with IIPPCC__CCRREEAATT to ensure failure if the segment already exists.
+
+       _m_o_d_e___f_l_a_g_s  (least significant 9 bits) specifying the permissions granted to the owner, group, and world.  These bits have the same format, and the same meaning, as the _m_o_d_e argument of ooppeenn(2).  Presently, the execute permissions
+                   are not used by the system.
+
+       SSHHMM__HHUUGGEETTLLBB (since Linux 2.6)
+                   Allocate the segment using "huge pages."  See the Linux kernel source file _D_o_c_u_m_e_n_t_a_t_i_o_n_/_v_m_/_h_u_g_e_t_l_b_p_a_g_e_._t_x_t for further information.
+
+       SSHHMM__NNOORREESSEERRVVEE (since Linux 2.6.15)
+                   This  flag  serves  the  same purpose as the mmmmaapp(2) MMAAPP__NNOORREESSEERRVVEE flag.  Do not reserve swap space for this segment.  When swap space is reserved, one has the guarantee that it is possible to modify the segment.  When
+                   swap space is not reserved one might get SSIIGGSSEEGGVV upon a write if no physical memory is available.  See also the discussion of the file _/_p_r_o_c_/_s_y_s_/_v_m_/_o_v_e_r_c_o_m_m_i_t___m_e_m_o_r_y in pprroocc(5).
+
+       When a new shared memory segment is created, its contents are initialized to zero values, and its associated data structure, _s_h_m_i_d___d_s (see sshhmmccttll(2)), is initialized as follows:
+
+              _s_h_m___p_e_r_m_._c_u_i_d and _s_h_m___p_e_r_m_._u_i_d are set to the effective user ID of the calling process.
+
+              _s_h_m___p_e_r_m_._c_g_i_d and _s_h_m___p_e_r_m_._g_i_d are set to the effective group ID of the calling process.
+
+              The least significant 9 bits of _s_h_m___p_e_r_m_._m_o_d_e are set to the least significant 9 bit of _s_h_m_f_l_g.
+
+              _s_h_m___s_e_g_s_z is set to the value of _s_i_z_e.
+
+              _s_h_m___l_p_i_d, _s_h_m___n_a_t_t_c_h, _s_h_m___a_t_i_m_e and _s_h_m___d_t_i_m_e are set to 0.
+
+              _s_h_m___c_t_i_m_e is set to the current time.
+
+       If the shared memory segment already exists, the permissions are verified, and a check is made to see if it is marked for destruction.
+
+RREETTUURRNN VVAALLUUEE
+       On success, a valid shared memory identifier is returned.  On errir, -1 is returned, and _e_r_r_n_o is set to indicate the error.
+
+EERRRROORRSS
+       On failure, _e_r_r_n_o is set to one of the following:
+
+       EEAACCCCEESS The user does not have permission to access the shared memory segment, and does not have the CCAAPP__IIPPCC__OOWWNNEERR capability.
+
+       EEEEXXIISSTT IIPPCC__CCRREEAATT || IIPPCC__EEXXCCLL was specified and the segment exists.
+
+       EEIINNVVAALL A new segment was to be created and _s_i_z_e < SSHHMMMMIINN or _s_i_z_e > SSHHMMMMAAXX, or no new segment was to be created, a segment with given key existed, but _s_i_z_e is greater than the size of that segment.
+
+       EENNFFIILLEE The system limit on the total number of open files has been reached.
+
+       EENNOOEENNTT No segment exists for the given _k_e_y, and IIPPCC__CCRREEAATT was not specified.
+
+       EENNOOMMEEMM No memory could be allocated for segment overhead.
+
+       EENNOOSSPPCC All possible shared memory IDs have been taken (SSHHMMMMNNII), or allocating a segment of the requested _s_i_z_e would cause the system to exceed the system-wide limit on shared memory (SSHHMMAALLLL).
+
+       EEPPEERRMM  The SSHHMM__HHUUGGEETTLLBB flag was specified, but the caller was not privileged (did not have the CCAAPP__IIPPCC__LLOOCCKK capability).
+
+CCOONNFFOORRMMIINNGG TTOO
+       SVr4, POSIX.1-2001.
+
+       SSHHMM__HHUUGGEETTLLBB is a nonportable Linux extension.
+
+NNOOTTEESS
+       The inclusion of _<_s_y_s_/_t_y_p_e_s_._h_> and _<_s_y_s_/_i_p_c_._h_> isn't required on Linux or by any version of POSIX.  However, some old implementations required the inclusion of these header files, and the  SVID  also  documented  their  inclusion.
+       Applications intended to be portable to such old systems may need to include these header files.
+
+       IIPPCC__PPRRIIVVAATTEE isn't a flag field but a _k_e_y___t type.  If this special value is used for _k_e_y, the system call ignores everything but the least significant 9 bits of _s_h_m_f_l_g and creates a new shared memory segment (on success).
+
+       The following limits on shared memory segment resources affect the sshhmmggeett() call:
+
+       SSHHMMAALLLL System wide maximum of shared memory pages (on Linux, this limit can be read and modified via _/_p_r_o_c_/_s_y_s_/_k_e_r_n_e_l_/_s_h_m_a_l_l).
+
+       SSHHMMMMAAXX Maximum size in bytes for a shared memory segment: policy dependent (on Linux, this limit can be read and modified via _/_p_r_o_c_/_s_y_s_/_k_e_r_n_e_l_/_s_h_m_m_a_x).
+
+       SSHHMMMMIINN Minimum size in bytes for a shared memory segment: implementation dependent (currently 1 byte, though PPAAGGEE__SSIIZZEE is the effective minimum size).
+
+       SSHHMMMMNNII System wide maximum number of shared memory segments: implementation dependent (currently 4096, was 128 before Linux 2.3.99; on Linux, this limit can be read and modified via _/_p_r_o_c_/_s_y_s_/_k_e_r_n_e_l_/_s_h_m_m_n_i).
+
+       The implementation has no specific limits for the per-process maximum number of shared memory segments (SSHHMMSSEEGG).
+
+   LLiinnuuxx nnootteess
+       Until version 2.3.30 Linux would return EEIIDDRRMM for a sshhmmggeett() on a shared memory segment scheduled for deletion.
+
+BBUUGGSS
+       The name choice IIPPCC__PPRRIIVVAATTEE was perhaps unfortunate, IIPPCC__NNEEWW would more clearly show its function.
+
+SSEEEE AALLSSOO
+       sshhmmaatt(2), sshhmmccttll(2), sshhmmddtt(2), ffttookk(3), ccaappaabbiilliittiieess(7), sshhmm__oovveerrvviieeww(7), ssvviippcc(7)
+
+CCOOLLOOPPHHOONN
+       This page is part of release 3.54 of the Linux _m_a_n_-_p_a_g_e_s project.  A description of the project, and information about reporting bugs, can be found at http://www.kernel.org/doc/man-pages/.
+
+
+
+Linux                                                                                                             2013-04-19                                                                                                        SHMGET(2)
